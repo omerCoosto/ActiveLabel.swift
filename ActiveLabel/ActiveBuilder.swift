@@ -41,7 +41,7 @@ struct ActiveBuilder {
                 continue
             }
 
-            let trimmedWord = word.trim(to: maxLenght)
+            let trimmedWord = word.trim(to: maxLength)
             text = text.replacingOccurrences(of: word, with: trimmedWord)
 
             let newRange = (text as NSString).range(of: trimmedWord)
