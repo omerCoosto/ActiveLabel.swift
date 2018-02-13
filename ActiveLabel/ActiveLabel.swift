@@ -23,6 +23,10 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
 
     open var enabledTypes: [ActiveType] = [.mention, .hashtag, .url]
 
+    fileprivate var isAttributedSet: Bool = false
+
+    open var textFont: UIFont?
+
     open var urlMaximumLength: Int?
     
     open var configureLinkAttribute: ConfigureLinkAttribute?
@@ -112,11 +116,17 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
 
     // MARK: - override UILabel properties
     override open var text: String? {
-        didSet { updateTextStorage() }
+        didSet {
+            isAttributedSet = false
+            updateTextStorage()
+        }
     }
 
     override open var attributedText: NSAttributedString? {
-        didSet { updateTextStorage() }
+        didSet {
+            isAttributedSet = true
+            updateTextStorage()
+        }
     }
     
     override open var font: UIFont! {
@@ -270,7 +280,6 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
             setNeedsDisplay()
             return
         }
-
         let mutAttrString = addLineBreak(attributedText)
 
         if parseText {
@@ -280,6 +289,13 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
         }
 
         addLinkAttribute(mutAttrString)
+        if isAttributedSet {
+            attributedText.enumerateAttributes(in: NSRange(location: 0, length: attributedText.length),
+                                               options: .longestEffectiveRangeNotRequired) { (attr, range, _) in
+                                                mutAttrString.addAttributes(attr, range: range)
+            }
+        }
+        
         textStorage.setAttributedString(mutAttrString)
         _customizing = true
         text = mutAttrString.string
@@ -306,7 +322,7 @@ typealias ElementTuple = (range: NSRange, element: ActiveElement, type: ActiveTy
         var range = NSRange(location: 0, length: 0)
         var attributes = mutAttrString.attributes(at: 0, effectiveRange: &range)
         
-        attributes[NSAttributedStringKey.font] = font!
+        attributes[NSAttributedStringKey.font] = textFont != nil ? textFont! : font!
         attributes[NSAttributedStringKey.foregroundColor] = textColor
         mutAttrString.addAttributes(attributes, range: range)
 
